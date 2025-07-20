@@ -1,0 +1,134 @@
+# Authentication Flow Implementation
+
+## OTP Handling
+
+### Email OTP Implementation
+- **OTP Generation**: 6-digit numeric OTPs are generated client-side for demonstration
+- **OTP Validation**: Validates format (6 digits) before submission
+- **Rate Limiting**: Client-side cooldown between OTP requests
+- **Expiration**: OTPs expire after 5 minutes
+
+### Signup Flow
+1. User submits the signup form with name, email, and password
+2. Frontend validates the form data using Yup schema
+3. On successful validation, user data is temporarily stored in a secure cookie
+4. System generates and sends an OTP via email using Nodemailer
+5. User is redirected to the verification page
+6. User enters the OTP received via email
+7. Frontend verifies the OTP (in a real app, this would be verified by the backend)
+8. On successful verification, user account is created and auth tokens are set
+
+### Login Flow
+1. User submits the login form with email and password
+2. Frontend validates the form data
+3. On successful validation, user email is temporarily stored in a secure cookie
+4. System generates and sends an OTP via email
+5. User is redirected to the verification page
+6. User enters the OTP received via email
+7. Frontend verifies the OTP
+8. On successful verification, auth tokens are set and user is logged in
+
+## Email Service
+
+### Implementation
+- **Nodemailer**: Used for sending emails
+- **Templates**: HTML email templates with responsive design
+- **Error Handling**: Comprehensive error handling and logging
+- **Environment Variables**:
+  - `EMAIL_SERVICE`: Email service provider (e.g., 'gmail')
+  - `EMAIL_USER`: Sender email address
+  - `EMAIL_PASSWORD`: App-specific password or service API key
+
+### Security
+- Environment variables are validated on application start
+- Email service configuration is verified on startup
+- Sensitive data is never logged
+- Secure SMTP connection is enforced
+
+## Cookie Storage
+
+### Security Measures
+- **HttpOnly**: Prevents XSS attacks
+- **Secure**: Only sent over HTTPS in production
+- **SameSite=Strict**: Prevents CSRF attacks
+- **Expiration**:
+  - Auth token: 1 day
+  - Refresh token: 7 days
+  - Temporary data: 1 day
+
+### Cookies Used
+1. `authToken`: JWT for authenticated requests
+2. `refreshToken`: For obtaining new auth tokens
+3. `tempUserData`: Temporary storage during signup
+4. `tempLoginData`: Temporary storage during login
+
+## API Endpoints
+
+### `/api/send-otp` (POST)
+- **Purpose**: Send OTP to user's email
+- **Request Body**: `{ email: string, otp: string }`
+- **Response**: 
+  - Success: `{ success: true }`
+  - Error: `{ error: string, details?: string }`
+- **Security**: Input validation for email format and OTP
+
+## Security Implementation
+
+### Rate Limiting
+- Client-side cooldown between OTP requests
+- In production, implement server-side rate limiting
+
+### Data Validation
+- Input validation using Yup schemas
+- Email format validation
+- OTP format validation (6 digits)
+- Password complexity requirements
+
+### Secure Headers
+- Content Security Policy (CSP)
+- XSS Protection
+- HSTS (in production)
+- Clickjacking protection
+
+## Production Considerations
+
+### Required Enhancements
+1. **Backend Implementation**:
+   - Move OTP generation and validation to the server
+   - Implement proper user authentication
+   - Add rate limiting and brute force protection
+
+2. **Email Service**:
+   - Use a dedicated email service (SendGrid, Mailgun, etc.)
+   - Set up SPF, DKIM, and DMARC records
+   - Monitor email delivery metrics
+
+3. **Security**:
+   - Implement proper session management
+   - Add audit logging
+   - Set up monitoring and alerts
+   - Regular security audits
+
+4. **Performance**:
+   - Implement caching for frequently accessed data
+   - Optimize database queries
+   - Use a CDN for static assets
+
+## Development Setup
+
+### Environment Variables
+Create a `.env.local` file with:
+```
+EMAIL_SERVICE=gmail
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+NODE_ENV=development
+```
+
+### Testing
+1. Test the signup flow with valid and invalid inputs
+2. Verify email delivery
+3. Test OTP verification
+4. Test session management and token refresh
+
+For more details, see README-EMAIL-SETUP.md
